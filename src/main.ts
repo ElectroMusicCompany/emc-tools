@@ -64,30 +64,35 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   if (commandName === 'auth_spotify') {
     // URLがあれば、トークンを取得
     if (options.get('url') !== null) {
-      // 中身は上と一緒
-      await interaction.deferReply();
-      const url = new URLSearchParams(options.get('url')!.value as string);
-      const code = url.get('code');
-      const res = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${Buffer.from(
-            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-          ).toString('base64')}`,
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code: code as string,
-          redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
-        }),
-      });
-      const data = await res.json();
-      delete data.scope;
-      data.expires = data.expires_in * 1000 + Date.now();
-      const spotifyToken = data as AccessToken;
-      spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
-      await interaction.reply({ content: 'Authenticated with Spotify!', ephemeral: true });
+      try {
+        // 中身は上と一緒
+        await interaction.deferReply();
+        const url = new URLSearchParams(options.get('url')!.value as string);
+        const code = url.get('code');
+        const res = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${Buffer.from(
+              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
+            ).toString('base64')}`,
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code: code as string,
+            redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
+          }),
+        });
+        const data = await res.json();
+        delete data.scope;
+        data.expires = data.expires_in * 1000 + Date.now();
+        const spotifyToken = data as AccessToken;
+        spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
+        await interaction.reply({ content: 'Spotify 認証済み!', ephemeral: true });
+      } catch (e) {
+        console.error(e);
+        await interaction.reply({ content: 'Spotifyの認証に失敗しました', ephemeral: true });
+      }
     } else {
       // URLがなければ、URLを返す
       await interaction.reply({
