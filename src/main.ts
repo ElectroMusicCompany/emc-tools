@@ -66,7 +66,6 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     if (options.get('url') !== null) {
       try {
         // 中身は上と一緒
-        await interaction.deferReply();
         const url = new URLSearchParams(options.get('url')!.value as string);
         const code = url.get('code');
         const res = await fetch('https://accounts.spotify.com/api/token', {
