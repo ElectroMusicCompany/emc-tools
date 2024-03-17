@@ -95,11 +95,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     } else {
       // URLがなければ、URLを返す
       await interaction.reply({
-        content: `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&scope=playlist-modify-public%20playlist-modify-private`,
-        ephemeral: true,
-      });
-      await interaction.followUp({
-        content: 'SpotifyのコールバックURLをコマンドに入れてください。\n`/auth_spotify url:YOUR_URL`',
+        content: `SpotifyのコールバックURLをコマンドに入れてください。\n\`/auth_spotify url:YOUR_URL\`\nhttps://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&scope=playlist-modify-public%20playlist-modify-private`,
         ephemeral: true,
       });
     }
