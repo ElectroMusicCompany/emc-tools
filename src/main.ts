@@ -107,7 +107,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   // Spotifyの認証
   if (commandName === 'auth_spotify') {
     // URLがあれば、トークンを取得
-    if (options.get('url')?.value !== null) {
+    if (options.get('url') !== null) {
       // 中身は上と一緒
       const url = new URLSearchParams(options.get('url')!.value as string);
       const code = url.get('code');
@@ -138,7 +138,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         ephemeral: true,
       });
       await interaction.followUp({
-        content: 'SpotifyのコールバックURLをコマンドに入れてください。\n`/auth_spotify url:YOUR_URL',
+        content: 'SpotifyのコールバックURLをコマンドに入れてください。\n`/auth_spotify url:YOUR_URL`',
         ephemeral: true,
       });
     }
