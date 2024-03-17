@@ -5,7 +5,6 @@ dotenv.config()
 
 const commands = [
   new SlashCommandBuilder().setName('auth_spotify').setDescription('Authenticate with Spotify').setDescriptionLocalization("ja", "Spotifyで認証")
-  .addStringOption(option => option.setName('url').setDescription('URL from Spotify').setDescriptionLocalization("ja", "SpotifyからのコールバックURL"))
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   new SlashCommandBuilder().setName('ping').setDescription('Replies with Pong!').setDescriptionLocalization("ja", "Pong!と返信"),
 ].map(command => command.toJSON());

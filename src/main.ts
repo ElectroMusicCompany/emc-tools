@@ -84,9 +84,6 @@ fastify.listen({ port: Number(process.env.PORT) || 3000 }, (err, address) => {
 client.once('ready', async () => {
   console.log('Ready!');
   console.log(client.user?.tag);
-  console.log(
-    `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&scope=playlist-modify-public%20playlist-modify-private`,
-  );
 });
 
 // スラッシュコマンドの処理
@@ -101,43 +98,10 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   }
   // Spotifyの認証
   if (commandName === 'auth_spotify') {
-    // URLがあれば、トークンを取得
-    if (options.get('url') !== null) {
-      try {
-        // 中身は上と一緒
-        const url = new URLSearchParams(options.get('url')!.value as string);
-        const code = url.get('code');
-        const res = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Basic ${Buffer.from(
-              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-            ).toString('base64')}`,
-          },
-          body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            code: code as string,
-            redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
-          }),
-        });
-        const data = await res.json();
-        delete data.scope;
-        data.expires = data.expires_in * 1000 + Date.now();
-        const token = data as AccessToken;
-        spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', token);
-        await interaction.reply({ content: 'Spotify 認証済み!', ephemeral: true });
-      } catch (e) {
-        console.error(e);
-        await interaction.reply({ content: 'Spotifyの認証に失敗しました', ephemeral: true });
-      }
-    } else {
-      // URLがなければ、URLを返す
-      await interaction.reply({
-        content: `SpotifyのコールバックURLをコマンドに入れてください。\n\`/auth_spotify url:YOUR_URL\`\nhttps://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&scope=playlist-modify-public%20playlist-modify-private`,
-        ephemeral: true,
-      });
-    }
+    await interaction.reply({
+      content: `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${process.env.SPOTIFY_REDIRECT_URI}&scope=playlist-modify-public%20playlist-modify-private`,
+      ephemeral: true,
+    });
   }
 });
 
