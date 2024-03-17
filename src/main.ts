@@ -2,15 +2,12 @@ import { Client, GuildMemberRoleManager, Interaction } from 'discord.js';
 import dotenv from 'dotenv';
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
-import Fastify from 'fastify';
 
 // .envの読み取り
 dotenv.config();
 
 // 初期化用
 const client = new Client({ intents: ['Guilds', 'GuildMessages', 'MessageContent', 'GuildMembers'] });
-
-const fastify = Fastify();
 
 let spotify: SpotifyApi;
 
@@ -43,47 +40,6 @@ interface SongWhip {
   refreshedAtTimestamp: number;
   url: string;
 }
-
-// 適当なエンドポイント
-fastify.get('/', async (request, reply) => {
-  return { hello: 'world' };
-});
-
-// Spotifyのコールバック用エンドポイント
-fastify.get('/callback', async (request, reply) => {
-  const { code } = request.query as { code: string };
-  // トークンの取得
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(
-        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
-      ).toString('base64')}`,
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
-    }),
-  });
-  const data = await res.json();
-  delete data.scope;
-  data.expires = data.expires_in * 1000 + Date.now();
-  const spotifyToken = data as AccessToken;
-  // SpotifyのAPIの初期化
-  spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
-  return { status: 'OK' };
-});
-
-// サーバーの起動
-fastify.listen({ port: 3000 }, (err, address) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`Server listening on ${address}`);
-});
 
 // Discord Bot起動時の処理
 client.once('ready', async () => {

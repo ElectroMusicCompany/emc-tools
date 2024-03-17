@@ -22,7 +22,6 @@
     "discord-api-types": "^0.37.74",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "fastify": "^4.26.2",
     "node-html-parser": "^6.1.12"
   }
 }
