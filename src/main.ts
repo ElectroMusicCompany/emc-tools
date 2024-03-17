@@ -1,8 +1,7 @@
-import { Client, Interaction } from 'discord.js';
+import { Client, GuildMemberRoleManager, Interaction } from 'discord.js';
 import dotenv from 'dotenv';
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
-import fetch from 'node-fetch';
 
 // .envの読み取り
 dotenv.config();
@@ -84,7 +83,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
             redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
           }),
         });
-        const data: any= await res.json();
+        const data = await res.json();
         delete data.scope;
         data.expires = data.expires_in * 1000 + Date.now();
         const spotifyToken = data as AccessToken;
@@ -125,7 +124,7 @@ client.on('messageCreate', async (message) => {
         'Content-Type': 'application/json',
       },
     });
-    const data: SongWhip = await res.json() as SongWhip;
+    const data: SongWhip = await res.json();
     // SpotifyのURLがあれば、Spotifyのプレイリストに追加
     if (data.links.spotify) {
       try {
