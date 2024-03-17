@@ -1,13 +1,16 @@
-import { Client, GuildMemberRoleManager, Interaction } from 'discord.js';
+import { Client, Interaction } from 'discord.js';
 import dotenv from 'dotenv';
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
+import Fastify from 'fastify';
 
 // .envの読み取り
 dotenv.config();
 
 // 初期化用
 const client = new Client({ intents: ['Guilds', 'GuildMessages', 'MessageContent', 'GuildMembers'] });
+
+const fastify = Fastify();
 
 let spotify: SpotifyApi;
 
@@ -40,6 +43,42 @@ interface SongWhip {
   refreshedAtTimestamp: number;
   url: string;
 }
+
+// Spotifyのコールバック用エンドポイント
+fastify.get('/callback', async (request, reply) => {
+  const { code } = request.query as { code: string };
+  // トークンの取得
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
+      ).toString('base64')}`,
+    },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: process.env.SPOTIFY_REDIRECT_URI || '',
+    }),
+  });
+  const data = await res.json();
+  delete data.scope;
+  data.expires = data.expires_in * 1000 + Date.now();
+  const spotifyToken = data as AccessToken;
+  // SpotifyのAPIの初期化
+  spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
+  return { status: 'OK' };
+});
+
+// サーバーの起動
+fastify.listen({ port: Number(process.env.PORT) || 3000 }, (err, address) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  console.log(`Server listening on ${address}`);
+});
 
 // Discord Bot起動時の処理
 client.once('ready', async () => {
@@ -85,8 +124,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         const data = await res.json();
         delete data.scope;
         data.expires = data.expires_in * 1000 + Date.now();
-        const spotifyToken = data as AccessToken;
-        spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
+        const token = data as AccessToken;
+        spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', token);
         await interaction.reply({ content: 'Spotify 認証済み!', ephemeral: true });
       } catch (e) {
         console.error(e);
@@ -121,20 +160,20 @@ client.on('messageCreate', async (message) => {
     });
     const data: SongWhip = await res.json();
     // SpotifyのURLがあれば、Spotifyのプレイリストに追加
-    if (data.links.spotify) {
+    if (spotify && data.links.spotify) {
       try {
-      // SongWhipのページをスクレイピングして、SpotifyのURLを取得
-      const servicesRes = await fetch(data.url);
-      const servicesData = parse(await servicesRes.text());
-      // <a>タグの中からSpotifyのURLを取得
-      const spotifyTags = Array.from(servicesData.querySelectorAll('a')).filter((tag) =>
-        tag.text.includes('Spotify'),
-      )[0];
-      const spotifyId = spotifyTags.getAttribute('href')!.split('/').pop() || '';
-      // SpotifyのAPIを使って、曲の情報を取得
-      const songData = await spotify.tracks.get(spotifyId);
-      // プレイリストに追加
-      await spotify.playlists.addItemsToPlaylist(process.env.SPOTIFY_PLAYLIST_ID || '', [songData.uri]);
+        // SongWhipのページをスクレイピングして、SpotifyのURLを取得
+        const servicesRes = await fetch(data.url);
+        const servicesData = parse(await servicesRes.text());
+        // <a>タグの中からSpotifyのURLを取得
+        const spotifyTags = Array.from(servicesData.querySelectorAll('a')).filter((tag) =>
+          tag.text.includes('Spotify'),
+        )[0];
+        const spotifyId = spotifyTags.getAttribute('href')!.split('/').pop() || '';
+        // SpotifyのAPIを使って、曲の情報を取得
+        const songData = await spotify.tracks.get(spotifyId);
+        // プレイリストに追加
+        await spotify.playlists.addItemsToPlaylist(process.env.SPOTIFY_PLAYLIST_ID || '', [songData.uri]);
       } catch (e) {
         console.error(e);
         message.reply('Spotifyのプレイリストに追加できませんでした。\n`/auth_spotify`で認証してください。');
