@@ -19,12 +19,10 @@
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@types/spotify-web-api-node": "^5.0.11",
     "discord-api-types": "^0.37.74",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.2",
-    "node-html-parser": "^6.1.12",
-    "spotify-web-api-node": "^5.0.2"
+    "node-html-parser": "^6.1.12"
   }
 }
