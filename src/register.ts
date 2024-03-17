@@ -1,10 +1,11 @@
-import { REST, Routes, SlashCommandBuilder } from 'discord.js'
+import { PermissionFlagsBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 const commands = [
-  new SlashCommandBuilder().setName('auth_spotify').setDescription('Authenticate with Spotify').setDescriptionLocalization("ja", "Spotifyで認証"),
+  new SlashCommandBuilder().setName('auth_spotify').setDescription('Authenticate with Spotify').setDescriptionLocalization("ja", "Spotifyで認証")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   new SlashCommandBuilder().setName('ping').setDescription('Replies with Pong!').setDescriptionLocalization("ja", "Pong!と返信"),
 ].map(command => command.toJSON());
 
