@@ -121,6 +121,7 @@ client.on('messageCreate', async (message) => {
     const data: SongWhip = await res.json();
     // SpotifyのURLがあれば、Spotifyのプレイリストに追加
     if (data.links.spotify) {
+      try {
       // SongWhipのページをスクレイピングして、SpotifyのURLを取得
       const servicesRes = await fetch(data.url);
       const servicesData = parse(await servicesRes.text());
@@ -133,6 +134,10 @@ client.on('messageCreate', async (message) => {
       const songData = await spotify.tracks.get(spotifyId);
       // プレイリストに追加
       await spotify.playlists.addItemsToPlaylist(process.env.SPOTIFY_PLAYLIST_ID || '', [songData.uri]);
+      } catch (e) {
+        console.error(e);
+        message.reply('Spotifyのプレイリストに追加できませんでした。\n`/auth_spotify`で認証してください。');
+      }
     }
     message.reply(data.url);
   }
