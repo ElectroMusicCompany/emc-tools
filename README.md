@@ -12,4 +12,4 @@ Discord bot for EMC Server
 
 ## License
 
-[WTFPL License](https://github.com/opera7133/emc-tools)
+[WTFPL License](https://github.com/opera7133/emc-tools/blob/main/LICENSE)
