@@ -1,0 +1,28 @@
+{
+  "name": "emc-tools",
+  "version": "1.0.0",
+  "description": "Discord bot for EMC Server",
+  "main": "index.js",
+  "scripts": {
+    "register": "ts-node src/register.ts",
+    "dev": "ts-node src/main.ts",
+    "start": "node build/main.js",
+    "build": "tsc -p ."
+  },
+  "author": "wamo <ainznino@pm.me>",
+  "license": "WTFPL",
+  "devDependencies": {
+    "@types/node": "^20.11.28",
+    "eslint": "^8.57.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "@spotify/web-api-ts-sdk": "^1.2.0",
+    "discord-api-types": "^0.37.74",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2",
+    "node-html-parser": "^6.1.12"
+  }
+}
