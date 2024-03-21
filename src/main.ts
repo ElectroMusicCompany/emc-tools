@@ -1,4 +1,4 @@
-import { Client, Interaction } from 'discord.js';
+import { Client, EmbedBuilder, Interaction } from 'discord.js';
 import dotenv from 'dotenv';
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
@@ -68,6 +68,91 @@ fastify.get('/callback', async (request, reply) => {
   const spotifyToken = data as AccessToken;
   // SpotifyのAPIの初期化
   spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
+  return { status: 'OK' };
+});
+
+// EMC-Shop用
+type PurchaseRequest = {
+  sellerId: string;
+  buyerId: string;
+  item: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  order: {
+    id: string;
+    createdAt: Date;
+    expiresAt?: Date;
+  };
+};
+
+fastify.post('/purchase', async (request, reply) => {
+  const secret = request.headers['Authorization']?.toString().split(' ')[1];
+  if (secret !== process.env.EMC_SHOP_SECRET) {
+    return reply.code(401).send({ status: 'NG' });
+  }
+  const { item, order, sellerId, buyerId } = request.body as PurchaseRequest;
+  const embed = new EmbedBuilder()
+    .setTitle('商品が購入されました')
+    .setDescription(`購入日: ${order.createdAt}`)
+    .addFields(
+      { name: '商品名', value: item.name },
+      { name: '価格', value: `${item.price}円` },
+      { name: 'URL', value: `https://shop.emcmusic.net/transaction/${order.id}` },
+    )
+    .setImage(item.image)
+    .setColor(0x00ff00)
+    .setTimestamp(new Date());
+  await client.users.fetch(sellerId).then((user) => user.send({ embeds: [embed] }));
+  const buyerEmbed = new EmbedBuilder()
+    .setTitle('商品を購入しました')
+    .setDescription(`購入日: ${order.createdAt}`)
+    .addFields(
+      { name: '商品名', value: item.name },
+      { name: '価格', value: `${item.price}円` },
+      { name: 'URL', value: `https://shop.emcmusic.net/transaction/${order.id}` },
+    )
+    .setImage(item.image)
+    .setColor(0x00ff00)
+    .setTimestamp(new Date());
+  await client.users.fetch(buyerId).then((user) => user.send({ embeds: [buyerEmbed] }));
+  return { status: 'OK' };
+});
+
+type ReviewRequest = {
+  userId: string;
+  item: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  order: {
+    id: string;
+    createdAt: Date;
+  };
+};
+
+fastify.post('/review', async (request, reply) => {
+  const secret = request.headers['Authorization']?.toString().split(' ')[1];
+  if (secret !== process.env.EMC_SHOP_SECRET) {
+    return reply.code(401).send({ status: 'NG' });
+  }
+  const { userId, item, order } = request.body as ReviewRequest;
+  const embed = new EmbedBuilder()
+    .setTitle('取引が評価されました')
+    .setDescription(`購入日: ${order.createdAt}`)
+    .addFields(
+      { name: '商品名', value: item.name },
+      { name: '価格', value: `${item.price}円` },
+      { name: 'URL', value: `https://shop.emcmusic.net/transaction/${order.id}` },
+    )
+    .setImage(item.image)
+    .setColor(0x00ff00)
+    .setTimestamp(new Date());
+  await client.users.fetch(userId).then((user) => user.send({ embeds: [embed] }));
   return { status: 'OK' };
 });
 
