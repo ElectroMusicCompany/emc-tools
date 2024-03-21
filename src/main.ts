@@ -231,7 +231,7 @@ client.on('messageCreate', async (message) => {
         await spotify.playlists.addItemsToPlaylist(process.env.SPOTIFY_PLAYLIST_ID || '', [songData.uri]);
       } catch (e) {
         console.error(e);
-        message.reply('Spotifyのプレイリストに追加できませんでした。\n`/auth_spotify`で認証してください。');
+        client.users.send(process.env.ADMIN_USER_ID || "", 'Spotifyのプレイリストに追加できませんでした。\n`/auth_spotify`で認証してください。');
       }
     }
     message.reply(data.url);
