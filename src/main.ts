@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
 import Fastify from 'fastify';
+import { format } from 'date-fns';
 
 // .envの読み取り
 dotenv.config();
@@ -106,13 +107,18 @@ fastify.post('/purchase', async (request, reply) => {
     .setColor(0x00ff00)
     .setTimestamp(new Date());
   await client.users.fetch(sellerId).then((user) => user.send({ embeds: [embed] }));
+  const buyerFields = [{ name: '商品名', value: item.name },
+  { name: '価格', value: `${item.price}円` },
+  { name: 'URL', value: `https://shop.emcmusic.net/transaction/${order.id}` },
+  ]
+  if (order.expiresAt) {
+    buyerFields.push({ name: '有効期限', value: format(order.expiresAt, "yyyy年MM月dd日 HH:mm:ss") });
+  }
   const buyerEmbed = new EmbedBuilder()
     .setTitle('商品を購入しました')
     .setDescription(`購入日: ${order.createdAt}`)
     .addFields(
-      { name: '商品名', value: item.name },
-      { name: '価格', value: `${item.price}円` },
-      { name: 'URL', value: `https://shop.emcmusic.net/transaction/${order.id}` },
+      buyerFields
     )
     .setImage(item.image)
     .setColor(0x00ff00)
