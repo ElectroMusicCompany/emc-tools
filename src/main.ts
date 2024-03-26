@@ -4,6 +4,7 @@ import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk';
 import { parse } from 'node-html-parser';
 import Fastify from 'fastify';
 import { format } from 'date-fns';
+import fs from 'fs/promises';
 
 // .envの読み取り
 dotenv.config();
@@ -69,6 +70,8 @@ fastify.get('/callback', async (request, reply) => {
   const spotifyToken = data as AccessToken;
   // SpotifyのAPIの初期化
   spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', spotifyToken);
+  // トークンの保存
+  await fs.writeFile('spotify.json', JSON.stringify(spotifyToken));
   return { status: 'OK' };
 });
 
@@ -162,6 +165,26 @@ fastify.post('/review', async (request, reply) => {
   return { status: 'OK' };
 });
 
+type PointRequest = {
+  userId: string;
+  points: number;
+};
+
+fastify.post('/point', async (request, reply) => {
+  const secret = request.headers['Authorization']?.toString().split(' ')[1];
+  if (secret !== process.env.EMC_SHOP_SECRET) {
+    return reply.code(401).send({ status: 'NG' });
+  }
+  const { userId, points } = request.body as PointRequest;
+  const embed = new EmbedBuilder()
+    .setTitle('ポイントが付与されました')
+    .setDescription(`ポイント: ${points}`)
+    .setColor(0x00ff00)
+    .setTimestamp(new Date());
+  await client.users.fetch(userId).then((user) => user.send({ embeds: [embed] }));
+  return { status: 'OK' };
+});
+
 // サーバーの起動
 fastify.listen({ port: Number(process.env.PORT) || 3000 }, (err, address) => {
   if (err) {
@@ -171,8 +194,26 @@ fastify.listen({ port: Number(process.env.PORT) || 3000 }, (err, address) => {
   console.log(`Server listening on ${address}`);
 });
 
+async function exists(f: string) {
+  try {
+    await fs.stat(f);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Discord Bot起動時の処理
 client.once('ready', async () => {
+  if (await exists('spotify.json')) {
+    try {
+      const token = JSON.parse(await fs.readFile('spotify.json', 'utf-8')) as AccessToken;
+      spotify = SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', token);
+      console.log("Spotify API initialized")
+    } catch (e) {
+      console.error(e);
+    }
+  }
   console.log('Ready!');
   console.log(client.user?.tag);
 });
